@@ -1,0 +1,119 @@
+<!DOCTYPE html>>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MovieMatch — Movie Recommender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ░░ BACKGROUND CANVAS ░░ -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <!-- ░░ HEADER ░░ -->
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">
+        Movie<em>Match</em></span>
+    </div>
+    <p class="tagline">Discover films you never knew you needed</p>
+  </header>
+
+  <!-- ░░ SEARCH SECTION ░░ -->
+  <main class="search-section">
+    <div class="search-container">
+
+      <div class="search-label">
+        <span class="label-line"></span>
+        <span class="label-text">Enter a movie name</span>
+        <span class="label-line"></span>
+      </div>
+
+      <div class="search-box-wrap">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            id="movieInput"
+            class="search-input"
+            placeholder="e.g. Inception, The Dark Knight..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
+        </div>
+        <button class="find-btn" id="findBtn">
+          <span class="btn-text">Find Movies</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+
+      <!-- Autocomplete dropdown -->
+      <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+
+      <p class="search-hint" id="searchHint">Type a movie name and press Enter or click Find Movies</p>
+
+    </div>
+  </main>
+
+  <!-- ░░ LOADING STATE ░░ -->
+  <div class="loading-section" id="loadingSection">
+    <div class="film-loader">
+      <div class="reel reel-left">
+        <div class="reel-inner"></div>
+      </div>
+      <div class="film-strip">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+      <div class="reel reel-right">
+        <div class="reel-inner"></div>
+      </div>
+    </div>
+    <p class="loading-text">Finding similar movies<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+  </div>
+
+  <!-- ░░ ERROR STATE ░░ -->
+  <div class="error-section" id="errorSection">
+    <div class="error-card">
+      <span class="error-icon">⚠</span>
+      <p class="error-msg" id="errorMsg">Something went wrong.</p>
+      <button class="retry-btn" onclick="clearAndReset()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- ░░ RESULTS SECTION ░░ -->
+  <section class="results-section" id="resultsSection">
+
+    <div class="results-header">
+      <div class="results-label">
+        <span class="rl-line"></span>
+        <span class="rl-text">Because you watched</span>
+        <span class="rl-line"></span>
+      </div>
+      <h2 class="results-movie-title" id="resultMovieTitle"></h2>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid">
+      <!-- Cards injected by JS -->
+    </div>
+
+  </section>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="site-footer">
+    <p>MovieMatch &mdash; Powered by Machine Learning</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
