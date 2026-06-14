@@ -11,7 +11,7 @@
    Agar alag port pe run ho (jaise Live Server) tab:
    const API_BASE_URL = "http://127.0.0.1:8000";
 ───────────────────────────────────────────────────────────── */
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://movie-recommender-system-uaq8.onrender.com";
 // 4287ad07b7b6ed2b7ea51c1b56ac3bdf
 // NAYI lines (ye daalo):
 const OMDB_KEY = "http://www.omdbapi.com/?i=tt3896198&apikey=25960589";  // ← yahan apni OMDb key daalo
