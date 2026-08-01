@@ -1,22 +1,13 @@
 /* ══════════════════════════════════════════════════════════════
    MovieMatch — script.js
    FastAPI: GET /recommend/{movie_name}  |  GET /movies
+   Poster: OMDb API (India mein kaam karta hai)
 ══════════════════════════════════════════════════════════════ */
 "use strict";
 
-/* ─────────────────────────────────────────────────────────────
-   API URL — blank rakho agar FastAPI khud frontend serve kare
-   (Render deploy ke liye bhi blank hi sahi hai)
-   
-   Agar alag port pe run ho (jaise Live Server) tab:
-   const API_BASE_URL = "http://127.0.0.1:8000";
-───────────────────────────────────────────────────────────── */
-const API_BASE_URL = "https://movie-recommender-system-uaq8.onrender.com";
-// 4287ad07b7b6ed2b7ea51c1b56ac3bdf
-// NAYI lines (ye daalo):
-const OMDB_KEY = "http://www.omdbapi.com/?i=tt3896198&apikey=25960589";  // ← yahan apni OMDb key daalo
-const TMDB_URL  = "https://api.themoviedb.org/3/search/movie";
-const TMDB_IMG  = "https://image.tmdb.org/t/p/w342";
+const API_BASE_URL = "";          /* FastAPI same server pe hai */
+const OMDB_KEY     = "63cb37dd"; /* OMDb API key */
+const OMDB_URL     = "https://www.omdbapi.com/";
 
 /* ── DOM ── */
 const movieInput       = document.getElementById("movieInput");
@@ -38,24 +29,24 @@ let posterCache = {};
 let movieList   = [];
 
 /* ══════════════════════════════════════════════════════════════
-   PAGE LOAD — /movies se poori list fetch karo
+   PAGE LOAD — /movies se poori list fetch karo (autocomplete)
 ══════════════════════════════════════════════════════════════ */
 async function loadMovieList() {
   try {
     const res = await fetch(`${API_BASE_URL}/movies`);
     if (!res.ok) return;
     const data = await res.json();
-    if (Array.isArray(data))              movieList = data;
-    else if (Array.isArray(data.movies))  movieList = data.movies;
+    if (Array.isArray(data))                 movieList = data;
+    else if (Array.isArray(data.movies))     movieList = data.movies;
     else if (Array.isArray(data.movie_list)) movieList = data.movie_list;
-    console.log(`✅ ${movieList.length} movies loaded for autocomplete`);
+    console.log(`✅ ${movieList.length} movies loaded`);
   } catch (e) {
     console.warn("Movie list load nahi hui:", e.message);
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RECOMMENDATIONS — /recommend/{movie_name}
+   RECOMMENDATIONS — FastAPI se
 ══════════════════════════════════════════════════════════════ */
 async function getRecommendations(movieName) {
   const url = `${API_BASE_URL}/recommend/${encodeURIComponent(movieName)}`;
@@ -68,32 +59,35 @@ async function getRecommendations(movieName) {
     throw new Error(data.error || `Server error: ${res.status}`);
   }
   if (!data.recommendations || data.recommendations.length === 0) {
-    throw new Error(`"${movieName}" database mein nahi mili ya koi match nahi.`);
+    throw new Error(`"${movieName}" database mein nahi mili.`);
   }
   return data.recommendations.slice(0, 5);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   TMDB POSTER FETCH
+   OMDB POSTER FETCH — India mein kaam karta hai ✅
 ══════════════════════════════════════════════════════════════ */
-
 async function fetchPoster(title) {
   if (posterCache[title]) return posterCache[title];
   try {
-    const res  = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&t=${encodeURIComponent(title)}&type=movie`);
+    const res  = await fetch(
+      `${OMDB_URL}?apikey=${OMDB_KEY}&t=${encodeURIComponent(title)}&type=movie`
+    );
     const data = await res.json();
     const result = {
       posterPath: data.Poster && data.Poster !== "N/A" ? data.Poster : null,
-      year: data.Year || "",
+      year:       data.Year   && data.Year   !== "N/A" ? data.Year.slice(0,4) : "",
+      rating:     data.imdbRating && data.imdbRating !== "N/A" ? data.imdbRating : "",
     };
     posterCache[title] = result;
     return result;
   } catch {
-    return { posterPath: null, year: "" };
+    return { posterPath: null, year: "", rating: "" };
   }
 }
+
 /* ══════════════════════════════════════════════════════════════
-   MAIN SEARCH
+   MAIN SEARCH FLOW
 ══════════════════════════════════════════════════════════════ */
 async function triggerSearch() {
   const movie = movieInput.value.trim();
@@ -107,12 +101,17 @@ async function triggerSearch() {
   showState("loading");
 
   try {
-    const recs    = await getRecommendations(movie);
+    /* 1. ML model se 5 recommendations */
+    const recs = await getRecommendations(movie);
+
+    /* 2. OMDb se saare posters parallel fetch karo */
     const posters = await Promise.all(recs.map(fetchPoster));
 
+    /* 3. Render cards */
     resultMovieTitle.textContent = movie;
     cardsGrid.innerHTML = recs.map((title, i) => buildCard(title, i + 1, posters[i])).join("");
 
+    /* Card click — search that movie */
     cardsGrid.querySelectorAll(".movie-card").forEach(card => {
       card.addEventListener("click", () => {
         movieInput.value = card.dataset.title;
@@ -131,13 +130,17 @@ async function triggerSearch() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CARD HTML
+   CARD HTML — poster + year + rating
 ══════════════════════════════════════════════════════════════ */
-function buildCard(title, rank, { posterPath, year } = {}) {
+function buildCard(title, rank, { posterPath, year, rating } = {}) {
   const imgHtml = posterPath
     ? `<img src="${esc(posterPath)}" alt="${esc(title)} poster" loading="lazy"
-           onerror="this.parentNode.innerHTML=fallbackPoster('${esc(title).replace(/'/g, "&#39;")}')">`
+           onerror="this.parentNode.innerHTML=fallbackPoster('${esc(title).replace(/'/g,"&#39;")}')">`
     : fallbackPoster(title);
+
+  const ratingHtml = rating
+    ? `<div class="card-rating">⭐ ${rating}</div>`
+    : "";
 
   return `
     <div class="movie-card" data-title="${esc(title)}" role="button" tabindex="0"
@@ -149,7 +152,10 @@ function buildCard(title, rank, { posterPath, year } = {}) {
       </div>
       <div class="card-body">
         <div class="card-title">${esc(title)}</div>
-        ${year ? `<div class="card-year">${year}</div>` : ""}
+        <div class="card-meta">
+          ${year   ? `<span class="card-year">${year}</span>` : ""}
+          ${rating ? `<span class="card-rating">⭐ ${rating}</span>` : ""}
+        </div>
         <div class="card-cta">Find similar →</div>
       </div>
     </div>`;
@@ -250,10 +256,10 @@ movieInput.addEventListener("input", () => {
 
 movieInput.addEventListener("keydown", e => {
   const items = autocompleteDD.querySelectorAll(".ac-item");
-  if      (e.key === "ArrowDown")  { acIndex = Math.min(acIndex + 1, items.length - 1); highlightAC(items); e.preventDefault(); }
-  else if (e.key === "ArrowUp")    { acIndex = Math.max(acIndex - 1, -1);               highlightAC(items); e.preventDefault(); }
-  else if (e.key === "Enter")      { if (acIndex >= 0 && items[acIndex]) { movieInput.value = items[acIndex].dataset.title; closeAC(); } triggerSearch(); }
-  else if (e.key === "Escape")     closeAC();
+  if      (e.key === "ArrowDown") { acIndex = Math.min(acIndex + 1, items.length - 1); highlightAC(items); e.preventDefault(); }
+  else if (e.key === "ArrowUp")   { acIndex = Math.max(acIndex - 1, -1);               highlightAC(items); e.preventDefault(); }
+  else if (e.key === "Enter")     { if (acIndex >= 0 && items[acIndex]) { movieInput.value = items[acIndex].dataset.title; closeAC(); } triggerSearch(); }
+  else if (e.key === "Escape")    closeAC();
 });
 
 document.addEventListener("click", e => {

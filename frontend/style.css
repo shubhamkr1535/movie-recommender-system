@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════
-   CINEMATCH — style.css
-   Cinematic dark theme
+    MOVIE MATCH — style.css
+    moviematch dark theme
 ══════════════════════════════════════════ */
 
 /* ── VARIABLES ── */
@@ -745,3 +745,21 @@ body {
 
 /* ── UTILITY ── */
 .hidden { display: none !important; }
+
+/* ── CARD META (year + rating) ── */
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.card-year {
+  font-size: 0.73rem;
+  color: var(--text-3);
+  font-weight: 300;
+}
+.card-rating {
+  font-size: 0.73rem;
+  color: #f5c232;
+  font-weight: 500;
+}
